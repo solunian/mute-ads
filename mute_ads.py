@@ -1,10 +1,11 @@
-from winsound.win_sound import WinSound
-from mac_sound import MacSound
-import webbrowser
-from requests_oauthlib import OAuth2Session
+import sys
 import time
 import json
-import sys
+import webbrowser
+from requests_oauthlib import OAuth2Session
+from winsound.win_sound import WinSound
+from mac_sound import MacSound
+
 
 client_id = "fc6b57cc09ef4b98b4ae24ca1cd5a0c1"
 client_secret = "cede8e4646944cc6b7d3888375314e07"
@@ -17,8 +18,8 @@ extra = {
     "client_id": client_id,
     "client_secret": client_secret
 }
-os = sys.platform
 
+# authorization functions
 def get_auth_token(client): 
     auth_url, state = client.authorization_url(authorization_url)
     webbrowser.open(auth_url)
@@ -26,10 +27,10 @@ def get_auth_token(client):
  
     token = client.fetch_token(token_url, client_secret=client_secret, authorization_response=authorization_response)
     return token
-def store_token(token):
+def store_token_info(token):
     with open("token.json", "w") as data:
         json.dump(token, data)
-def get_stored_token():
+def get_stored_token_info():
     with open("token.json") as json_file:
         data = json_file.read()
         if data == "\{\}" or data == "":
@@ -37,45 +38,44 @@ def get_stored_token():
         return json.loads(data)
 def set_info(token):
     curr_token = str(token["access_token"])
-    store_token(token)
+    store_token_info(token)
 
+# os based code
+os = sys.platform
 def os_mute():
     if os == "win32" and not WinSound.is_muted():
         WinSound.mute()
-    elif os == "darwin" and not MacSound.is_muted():
+    elif os == "darwin":
         MacSound.mute()
 def os_unmute():
     if os == "win32" and WinSound().is_muted():
         WinSound.mute()
-    elif os == "darwin" and MacSound.is_muted():
-        MacSound.mute()
+    elif os == "darwin":
+        MacSound.unmute()
 
 
 def main():
     # creates a token.json file if it does not exist
     open("token.json", "a").close()
 
-    token_info = get_stored_token()
+    token_info = get_stored_token_info()
     spotify = OAuth2Session(client_id, 
                         redirect_uri=redirect_uri,
                         scope=scope, 
                         token=token_info,
                         auto_refresh_url=token_url,
                         auto_refresh_kwargs=extra,
-                        token_updater=store_token)
+                        token_updater=store_token_info)
 
     if token_info == {}:
         set_info(get_auth_token(spotify))
-        token_info = get_stored_token()
-    elif time.time() >= token_info["expires_at"]:
-        token_info["expires_in"] = 0
+        token_info = get_stored_token_info()
 
 
     while True:    
-        endpoint = "https://api.spotify.com/v1/me/player/currently-playing"
-        temp = spotify.get(endpoint + "?market=US", headers={"Authorization": "Bearer " + curr_token})
+        temp = spotify.get(endpoint_url + "?market=US", headers={"Authorization": "Bearer " + curr_token})
         status = temp.status_code
-        
+    
         if status == 204: # no content found
             os_unmute()
             print("No music is being played or paused at the moment.")
@@ -88,7 +88,7 @@ def main():
                 os_mute()
             elif playing_type == "track":
                 os_unmute()
-        else:
+        else: # error?
             print(result)
             break
 
