@@ -3,8 +3,6 @@ import time
 import json
 import webbrowser
 from requests_oauthlib import OAuth2Session
-from winsound.win_sound import WinSound
-from mac_sound import MacSound
 
 
 client_id = "fc6b57cc09ef4b98b4ae24ca1cd5a0c1"
@@ -12,12 +10,14 @@ client_secret = "cede8e4646944cc6b7d3888375314e07"
 redirect_uri = "https://open.spotify.com"
 authorization_url = "https://accounts.spotify.com/authorize"
 token_url = "https://accounts.spotify.com/api/token"
+endpoint_url = "https://api.spotify.com/v1/me/player/currently-playing"
 scope = ["user-read-currently-playing"]
 curr_token = ""
 extra = {
     "client_id": client_id,
     "client_secret": client_secret
 }
+
 
 # authorization functions
 def get_auth_token(client): 
@@ -40,15 +40,20 @@ def set_info(token):
     curr_token = str(token["access_token"])
     store_token_info(token)
 
+
 # os based code
 os = sys.platform
+if os == "win32":
+    from winsound.win_sound import WinSound
+elif os == "darwin":
+    from mac_sound import MacSound
 def os_mute():
     if os == "win32" and not WinSound.is_muted():
         WinSound.mute()
     elif os == "darwin":
         MacSound.mute()
 def os_unmute():
-    if os == "win32" and WinSound().is_muted():
+    if os == "win32" and WinSound.is_muted():
         WinSound.mute()
     elif os == "darwin":
         MacSound.unmute()
@@ -89,7 +94,7 @@ def main():
             elif playing_type == "track":
                 os_unmute()
         else: # error?
-            print(result)
+            print(temp)
             break
 
         # avoids sending too many requests    
