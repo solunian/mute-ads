@@ -1,8 +1,17 @@
 import sys
 import time
 import json
+import socket
 import webbrowser
 from requests_oauthlib import OAuth2Session
+
+# platform-based code
+platform = sys.platform
+if platform == "win32":
+    from win.win_sound import WinSound
+elif platform == "darwin":
+    from mac.mac_sound import MacSound
+    from mac import mac_util
 
 
 client_id = "fc6b57cc09ef4b98b4ae24ca1cd5a0c1"
@@ -10,8 +19,9 @@ client_secret = "cede8e4646944cc6b7d3888375314e07"
 redirect_uri = "https://open.spotify.com"
 authorization_url = "https://accounts.spotify.com/authorize"
 token_url = "https://accounts.spotify.com/api/token"
-endpoint_url = "https://api.spotify.com/v1/me/player/currently-playing"
-scope = ["user-read-currently-playing"]
+currently_playing_url = "https://api.spotify.com/v1/me/player/currently-playing"
+devices_url = "https://api.spotify.com/v1/me/player/devices"
+scope = ["user-read-currently-playing", "user-read-playback-state"]
 curr_token = ""
 extra = {
     "client_id": client_id,
@@ -41,21 +51,16 @@ def set_info(token):
     store_token_info(token)
 
 
-# os based code
-os = sys.platform
-if os == "win32":
-    from winsound.win_sound import WinSound
-elif os == "darwin":
-    from mac_sound import MacSound
+# win and mac muting
 def os_mute():
-    if os == "win32" and not WinSound.is_muted():
+    if platform == "win32" and not WinSound.is_muted():
         WinSound.mute()
-    elif os == "darwin":
+    elif platform == "darwin":
         MacSound.mute()
 def os_unmute():
-    if os == "win32" and WinSound.is_muted():
+    if platform == "win32" and WinSound.is_muted():
         WinSound.mute()
-    elif os == "darwin":
+    elif platform == "darwin":
         MacSound.unmute()
 
 
@@ -75,11 +80,41 @@ def main():
     if token_info == {}:
         set_info(get_auth_token(spotify))
         token_info = get_stored_token_info()
+    count = 0
+
+    while True:
+
+        # check if Spotify is playing from this device
+        if count % 3 == 0: # every 3 seconds, it checks the devices (only for desktop app currently)
+            response = spotify.get(devices_url, headers={"Authorization": "Bearer " + curr_token})   
+            status = response.status_code 
+            if status == 200:
+                response_info = response.json()
+
+                # get host name
+                hostname = ""
+                if platform == "win32":
+                    hostname = socket.gethostname().lower()
+                elif platform == "darwin":
+                    hostname = mac_util.get_computername().lower()
+
+                foundDevice = False
+                for device in response_info["devices"]:
+                    if device["name"].lower() == hostname or device["name"][:10] == "Web Player":
+                        foundDevice = True
+                        break
+                if not foundDevice:
+                    print("Spotify is not open on this device.")
+                    break
+            else:
+                print(response)
+                break
+        count += 1
 
 
-    while True:    
-        temp = spotify.get(endpoint_url + "?market=US", headers={"Authorization": "Bearer " + curr_token})
-        status = temp.status_code
+        # get currently playing
+        response = spotify.get(currently_playing_url + "?market=US", headers={"Authorization": "Bearer " + curr_token})
+        status = response.status_code
     
         if status == 204: # no content found
             os_unmute()
@@ -87,7 +122,7 @@ def main():
             input("Play something and return to begin running...")
             continue
         elif status == 200: # okay
-            result = temp.json()
+            result = response.json()
             playing_type = result["currently_playing_type"]
             if playing_type == "ad":
                 os_mute()
@@ -98,7 +133,7 @@ def main():
             break
 
         # avoids sending too many requests    
-        time.sleep(0.5)
+        time.sleep(1)
 
 
 if __name__ == "__main__":
