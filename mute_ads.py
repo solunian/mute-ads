@@ -5,6 +5,8 @@ import socket
 import webbrowser
 from requests_oauthlib import OAuth2Session
 
+from secret import *
+
 # platform-based code
 platform = sys.platform
 if platform == "win32":
@@ -14,8 +16,6 @@ elif platform == "darwin":
     from mac import mac_util
 
 
-client_id = "fc6b57cc09ef4b98b4ae24ca1cd5a0c1"
-client_secret = "cede8e4646944cc6b7d3888375314e07"
 redirect_uri = "https://open.spotify.com"
 authorization_url = "https://accounts.spotify.com/authorize"
 token_url = "https://accounts.spotify.com/api/token"
@@ -129,7 +129,7 @@ def main():
             elif playing_type == "track":
                 os_unmute()
         else: # error?
-            print(temp)
+            print(response)
             break
 
         # avoids sending too many requests    
