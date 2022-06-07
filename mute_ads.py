@@ -59,11 +59,15 @@ def os_mute():
         WinSound.mute()
     elif platform == "darwin":
         MacSound.mute()
+    elif platform == "linux":
+        LinuxSound.mute()
 def os_unmute():
     if platform == "win32" and WinSound.is_muted():
         WinSound.mute()
     elif platform == "darwin":
         MacSound.unmute()
+    elif platform == "linux":
+        LinuxSound.unmute()
 
 
 def main():
@@ -84,6 +88,8 @@ def main():
         token_info = get_stored_token_info()
     count = 0
 
+    last_playing_type = "track"
+
     while True:
 
         # check if Spotify is playing from this device
@@ -95,17 +101,17 @@ def main():
 
                 # get host name
                 hostname = ""
-                if platform == "win32":
+                if platform == "win32" or platform == "linux":
                     hostname = socket.gethostname().lower()
                 elif platform == "darwin":
                     hostname = mac_util.get_computername().lower()
 
-                foundDevice = False
+                found_device = False
                 for device in response_info["devices"]:
                     if device["name"].lower() == hostname or device["name"][:10] == "Web Player":
-                        foundDevice = True
+                        found_device = True
                         break
-                if not foundDevice:
+                if not found_device:
                     print("Spotify is not open on this device.")
                     break
             else:
@@ -126,16 +132,20 @@ def main():
         elif status == 200: # okay
             result = response.json()
             playing_type = result["currently_playing_type"]
-            if playing_type == "ad":
+            if playing_type == "ad" and last_playing_type != "ad":
                 os_mute()
-            elif playing_type == "track":
+                last_playing_type = "ad"
+                print("ad muted!")
+            elif playing_type == "track" and last_playing_type != "track":
                 os_unmute()
+                last_playing_type = "track"
+                print("unmuted for music!")
         else: # error?
             print(response)
             break
 
         # avoids sending too many requests    
-        time.sleep(1.5)
+        time.sleep(2)
 
 
 if __name__ == "__main__":

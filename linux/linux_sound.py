@@ -3,7 +3,7 @@ import os
 
 class LinuxSound:
 
-    playing_volume = -1
+    # playing_volume = -1
 
     @staticmethod
     def get_volume() -> int:
@@ -21,19 +21,19 @@ class LinuxSound:
 
     @staticmethod
     def mute():
-        LinuxSound.playing_volume = LinuxSound.get_volume()
-        LinuxSound.set_volume(0)
+        subprocess.call(["amixer", "-D", "pulse", "--quiet", "sset", "Master", "mute"])
+        # LinuxSound.playing_volume = LinuxSound.get_volume()
+        # LinuxSound.set_volume(0)
     
     @staticmethod
     def unmute():
-        if LinuxSound.playing_volume != -1:
-            LinuxSound.set_volume(LinuxSound.playing_volume)
+        subprocess.call(["amixer", "-D", "pulse", "--quiet", "sset", "Master", "unmute"])
+        # if LinuxSound.playing_volume != -1:
+        #     LinuxSound.set_volume(LinuxSound.playing_volume)
 
     @staticmethod
     def is_muted():
         return LinuxSound.get_volume() == 0
-
-
 
 
 if __name__ == "__main__":
@@ -44,6 +44,7 @@ if __name__ == "__main__":
     print(f"\noriginal volume set to: {LinuxSound.get_volume()}")
     LinuxSound.mute()
     print(f"mute")
+    print(f"muted volume: {LinuxSound.get_volume()}")
     LinuxSound.unmute()
     print(f"unmute")
     print(f"volume changed to: {LinuxSound.get_volume()}")
