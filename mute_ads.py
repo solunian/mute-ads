@@ -14,6 +14,8 @@ if platform == "win32":
 elif platform == "darwin":
     from mac.mac_sound import MacSound
     from mac import mac_util
+elif platform == "linux":
+    from linux.linux_sound import LinuxSound
 
 
 redirect_uri = "https://open.spotify.com"
@@ -133,7 +135,7 @@ def main():
             break
 
         # avoids sending too many requests    
-        time.sleep(1)
+        time.sleep(1.5)
 
 
 if __name__ == "__main__":
