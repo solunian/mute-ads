@@ -2,5 +2,4 @@
 # run in terminal with: $ source linux_mute_ads.sh
 
 cd ~/code/mute-ads/
-source venv/bin/activate
-python mute_ads.py
+venv/bin/python mute_ads.py
