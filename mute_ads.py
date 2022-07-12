@@ -145,7 +145,7 @@ def main():
             break
 
         # avoids sending too many requests    
-        time.sleep(2)
+        time.sleep(5)
 
 
 if __name__ == "__main__":
