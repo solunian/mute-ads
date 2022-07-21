@@ -140,12 +140,15 @@ def main():
                 os_unmute()
                 last_playing_type = "track"
                 print("unmuted for music!")
+        elif status == 500:
+            print("too many requests! sleeping for 10s")
+            time.sleep(10)
         else: # error?
             print(response)
             break
 
         # avoids sending too many requests    
-        time.sleep(5)
+        time.sleep(3)
 
 
 if __name__ == "__main__":
