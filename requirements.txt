@@ -6,7 +6,7 @@ macholib==1.14
 oauthlib==3.1.0
 osascript==2020.12.3
 psutil==5.8.0
-requests==2.25.1
+requests>=2.31.0
 requests-oauthlib==1.3.0
 runcmd==2020.12.3
 urllib3==1.26.5
